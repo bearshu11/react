@@ -28,6 +28,29 @@ var GetJsonAction = {
         });
     }
 };
+var GetWatchingAction = {
+    getWatching: function() {
+        var request = new XMLHttpRequest();
+        var url = "https://api.github.com/user/subscriptions";
+        var token = 'token cd55ab38ce56606dbdfcd463c20706a9bb0a3a2e';
+        request.open('GET', url, true);
+            request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+            request.setRequestHeader('Authorization',token);
+            request.onreadystatechange = function(){
+                if (request.readyState === 4 && request.status === 200){
+                    var returnedJson = JSON.parse(request.responseText);
+                    dispatcher.dispatch({
+                        actionType: "getWatching",
+                        data: returnedJson
+                    });
+                }
+                else if (request.readyState === 4 && request.status !== 200){
+                    alert('error');
+                }
+            };
+            request.send();
+    },
+}
 
 var RegisterJsonAction = {
     registerJson: function(json) {
@@ -49,6 +72,7 @@ var RemoveJsonAction = {
 
 var _responce = {data:null};
 var _stored = {data:[]}
+var _watching = {data:null}
 
 var GetJsonStore = {
     getAll: function () {
@@ -65,15 +89,22 @@ var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
     getAll: function () {
         return _stored;
     },
+    getWatching: function () {
+        return _watching;
+    },
     // イベントを発生させるメソッドの定義
     emitChange: function () {
         // イベント名"change"としてイベントを発生
         this.emit("change");
     },
+    emitGetWatching: function () {
+        this.emit("getWatching");
+    },
     // イベントの監視（購読）とコールバックの定義
     addChangeListener: function (callback) {
         // "change"イベントの発生を取得したら、引数にセットされたコールバック関数を実行
         this.on("change", callback);
+        this.on("getWatching", callback);
     },
     dispatcherIndex: dispatcher.register(function (payload) {
         if (payload.actionType === "registerJson") {
@@ -82,6 +113,9 @@ var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
             StoredJsonStore.emitChange();
         } else if (payload.actionType === "removeJson") {
 
+        } else if (payload.actionType === "getWatching") {
+            _watching.data = payload.data;
+            StoredJsonStore.emitGetWatching();
         }
     })
 });
@@ -121,6 +155,7 @@ class WatchingRepositoryArea extends React.Component {
         super();
         this.state = {storedData:[]};
         this.unwatch = this.unwatch.bind(this);
+        GetWatchingAction.getWatching();
     }
     unwatch(value) {
         // console.log(value.name);
@@ -133,7 +168,8 @@ class WatchingRepositoryArea extends React.Component {
         StoredJsonStore.addChangeListener(function () {
             // TestStore.getAll()を引数にセットし、setState()メソッドを実行
             // →Viewが再描画される
-            var storedData = StoredJsonStore.getAll();
+            // var storedData = StoredJsonStore.getAll();
+            var storedData = StoredJsonStore.getWatching();
             self.setState({storedData:storedData.data});
         });
     }
