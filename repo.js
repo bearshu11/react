@@ -32,7 +32,7 @@ var GetWatchingAction = {
     getWatching: function() {
         var request = new XMLHttpRequest();
         var url = "https://api.github.com/user/subscriptions";
-        var token = 'token cd55ab38ce56606dbdfcd463c20706a9bb0a3a2e';
+        var token = '';
         request.open('GET', url, true);
             request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
             request.setRequestHeader('Authorization',token);
