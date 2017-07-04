@@ -22,14 +22,33 @@ var GetJsonAction = {
             var json = returnedJson;
             dispatcher.dispatch({
                 actionType: "getJson",
-                json: json
+                data: json
             });
             viewCallback();
         });
     }
 };
 
-var _responce = {json:null};
+var RegisterJsonAction = {
+    registerJson: function(json) {
+        dispatcher.dispatch({
+            actionType: "registerJson",
+            data: json
+        });
+    }
+};
+
+var RemoveJsonAction = {
+    romoveJson: function(json) {
+        dispatcher.dispatch({
+            actionType: "removeJson",
+            data: json
+        });
+    }
+};
+
+var _responce = {data:null};
+var _stored = {data:[]}
 
 var GetJsonStore = {
     getAll: function () {
@@ -37,18 +56,101 @@ var GetJsonStore = {
     },
     dispatcherIndex: dispatcher.register(function (payload) {
         if (payload.actionType === "getJson") {
-            _responce.json = payload.json;
+            _responce.data = payload.data;
         }
     })
 };
 
+var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
+    getAll: function () {
+        return _stored;
+    },
+    // イベントを発生させるメソッドの定義
+    emitChange: function () {
+        // イベント名"change"としてイベントを発生
+        this.emit("change");
+    },
+    // イベントの監視（購読）とコールバックの定義
+    addChangeListener: function (callback) {
+        // "change"イベントの発生を取得したら、引数にセットされたコールバック関数を実行
+        this.on("change", callback);
+    },
+    dispatcherIndex: dispatcher.register(function (payload) {
+        if (payload.actionType === "registerJson") {
+            _stored.data[_stored.data.length] = payload.data;
+            // emitChange()メソッドを実行（イベント発生）
+            StoredJsonStore.emitChange();
+        } else if (payload.actionType === "removeJson") {
+
+        }
+    })
+});
+
 class ResultList extends React.Component {
+    constructor() {
+        super();
+        this.watch = this.watch.bind(this);
+    }
+    watch(value) {
+        console.log(value.name);
+        RegisterJsonAction.registerJson(value);
+    }
+    render() {
+        return (
+            <tr key = {this.props.value.id}>
+                <td>{this.props.value.name}</td> <td><button onClick={() => this.watch(this.props.value)}>watch</button></td>
+            </tr>
+        );
+    }
+}
+
+class WatchingList extends React.Component {
     constructor() {
         super();
     }
     render() {
         return (
-            <li></li>
+            <tr key = {this.props.value.id}>
+                <td>{this.props.value.name}</td> <td><button onClick={() => this.unwatch(this.props.value)}>unwatch</button></td>
+            </tr>
+        );
+    }
+}
+class WatchingRepositoryArea extends React.Component {
+    constructor() {
+        super();
+        this.state = {storedData:[]};
+        this.unwatch = this.unwatch.bind(this);
+    }
+    unwatch(value) {
+        // console.log(value.name);
+        // RegisterJsonAction.registerJson(value);
+    }
+    // コンポーネントが描画されたら実行
+    componentDidMount() {
+        var self = this;
+        // TestStoreのaddChangeListener()メソッドにコールバック関数をセットし実行
+        StoredJsonStore.addChangeListener(function () {
+            // TestStore.getAll()を引数にセットし、setState()メソッドを実行
+            // →Viewが再描画される
+            var storedData = StoredJsonStore.getAll();
+            self.setState({storedData:storedData.data});
+        });
+    }
+    render() {
+        var rows = [];
+        if (this.state.storedData.length !== 0) {
+            var storedData = this.state.storedData;
+            for (var i=0;i<storedData.length;i++) {
+                rows.push(<WatchingList value={storedData[i]} key={storedData[i].id}></WatchingList>);
+            }
+        }
+        return (
+            <table>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>
         );
     }
 }
@@ -65,9 +167,9 @@ class SearchRepositoryForm extends React.Component {
         GetJsonAction.getJson(url, "", () => {
             var responce = GetJsonStore.getAll();
             this.setState({
-                returnedData: responce.json
+                returnedData: responce.data
             });
-            console.log(responce.json);
+            console.log(responce.data);
         });
     }
     handleChangeInput(event) {
@@ -81,8 +183,10 @@ class SearchRepositoryForm extends React.Component {
         var rows = [];
         if (this.state.returnedData != null ) {
             for (var i = 0; i < this.state.returnedData.total_count; i++) {
-                if (this.state.returnedData.items[i] != null) {
-                    rows.push(<li key= {i}>{this.state.returnedData.items[i].name}</li>);
+                var item = this.state.returnedData.items[i]
+                if (item != null) {
+                    // rows.push(<li key= {i}>{this.state.returnedData.items[i].name}</li>);
+                    rows.push(<ResultList value ={item} key={item.id}></ResultList>);
                 } else {
                     break;
                 }
@@ -91,9 +195,11 @@ class SearchRepositoryForm extends React.Component {
         return (
             <div>
                 <input type="text" value={this.state.query} onChange={this.handleChangeInput}/>
-                <ul>
-                    {rows}
-                </ul>
+                <table>
+                    <tbody>
+                        {rows}
+                    </tbody>
+                </table>
             </div>
         );
   }
@@ -102,4 +208,9 @@ class SearchRepositoryForm extends React.Component {
 ReactDOM.render(
     <SearchRepositoryForm />,
     document.getElementById('searcher')
+);
+
+ReactDOM.render(
+    <WatchingRepositoryArea />,
+    document.getElementById('watching')
 );
