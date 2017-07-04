@@ -56,35 +56,43 @@ class ResultList extends React.Component {
 class SearchRepositoryForm extends React.Component {
     constructor() {
         super();
-        this.state = {value : {}, query: ""};
+        this.state = {returnedData : null, query: ""};
         this.send = this.send.bind(this);
         this.handleChangeInput = this.handleChangeInput.bind(this);
     }
     send() {
         var url = "https://api.github.com/search/repositories?q=" + this.state.query + "+language:assembly&sort=stars&order=desc";
-        GetJsonAction.getJson(url, "", function() {
+        GetJsonAction.getJson(url, "", () => {
             var responce = GetJsonStore.getAll();
-            console.log(responce.json.items);
+            this.setState({
+                returnedData: responce.json
+            });
+            console.log(responce.json);
         });
-
-        // this.setState(GetJsonStore.getAll());
     }
     handleChangeInput(event) {
         var query = event.target.value;
         this.setState({
             query: query
         });
-        var url = "https://api.github.com/search/repositories?q=" + this.state.query + "+language:assembly&sort=stars&order=desc";
-        GetJsonAction.getJson(url, "", function() {
-            var responce = GetJsonStore.getAll();
-            console.log(responce.json.items);
-        });
+        this.send();
     }
     render() {
+        var rows = [];
+        if (this.state.returnedData != null ) {
+            for (var i = 0; i < this.state.returnedData.total_count; i++) {
+                if (this.state.returnedData.items[i] != null) {
+                    rows.push(<li key= {i}>{this.state.returnedData.items[i].name}</li>);
+                } else {
+                    break;
+                }
+            }
+        }
         return (
             <div>
                 <input type="text" value={this.state.query} onChange={this.handleChangeInput}/>
                 <ul>
+                    {rows}
                 </ul>
             </div>
         );
