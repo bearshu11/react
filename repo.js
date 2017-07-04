@@ -46,9 +46,11 @@ class ResultList extends React.Component {
     constructor() {
         super();
     }
-    return (
-        <li></li>
-    );
+    render() {
+        return (
+            <li></li>
+        );
+    }
 }
 
 class SearchRepositoryForm extends React.Component {
@@ -72,16 +74,16 @@ class SearchRepositoryForm extends React.Component {
         this.setState({
             query: query
         });
+        var url = "https://api.github.com/search/repositories?q=" + this.state.query + "+language:assembly&sort=stars&order=desc";
+        GetJsonAction.getJson(url, "", function() {
+            var responce = GetJsonStore.getAll();
+            console.log(responce.json.items);
+        });
     }
     render() {
         return (
             <div>
-                <form action="javascript:void(0)" onSubmit={this.send}>
-                    <input type="text" value={this.state.name} onChange={this.handleChangeInput}/>
-                    <button className="SearchRepositoryForm" type="submit">
-                        Search
-                    </button>
-                </form>
+                <input type="text" value={this.state.query} onChange={this.handleChangeInput}/>
                 <ul>
                 </ul>
             </div>
