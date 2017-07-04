@@ -22,14 +22,14 @@ var GetJsonAction = {
             var json = returnedJson;
             dispatcher.dispatch({
                 actionType: "getJson",
-                value: json
+                json: json
             });
             viewCallback();
         });
     }
 };
 
-var _responce = {value:"Hello"};
+var _responce = {json:null};
 
 var GetJsonStore = {
     getAll: function () {
@@ -37,10 +37,19 @@ var GetJsonStore = {
     },
     dispatcherIndex: dispatcher.register(function (payload) {
         if (payload.actionType === "getJson") {
-            _responce.value = payload.value;
+            _responce.json = payload.json;
         }
     })
 };
+
+class ResultList extends React.Component {
+    constructor() {
+        super();
+    }
+    return (
+        <li></li>
+    );
+}
 
 class SearchRepositoryForm extends React.Component {
     constructor() {
@@ -50,10 +59,10 @@ class SearchRepositoryForm extends React.Component {
         this.handleChangeInput = this.handleChangeInput.bind(this);
     }
     send() {
-        var url = "https://api.github.com/search/repositories?q=" + this.state.query +"+language:assembly&sort=stars&order=desc";
+        var url = "https://api.github.com/search/repositories?q=" + this.state.query + "+language:assembly&sort=stars&order=desc";
         GetJsonAction.getJson(url, "", function() {
-            var a = GetJsonStore.getAll();
-            console.log(a.value.items);
+            var responce = GetJsonStore.getAll();
+            console.log(responce.json.items);
         });
 
         // this.setState(GetJsonStore.getAll());
@@ -66,12 +75,16 @@ class SearchRepositoryForm extends React.Component {
     }
     render() {
         return (
-            <form action="javascript:void(0)" onSubmit={this.send}>
-                <input type="text" value={this.state.name} onChange={this.handleChangeInput}/>
-                <button className="SearchRepositoryForm" type="submit">
-                    Search
-                </button>
-            </form>
+            <div>
+                <form action="javascript:void(0)" onSubmit={this.send}>
+                    <input type="text" value={this.state.name} onChange={this.handleChangeInput}/>
+                    <button className="SearchRepositoryForm" type="submit">
+                        Search
+                    </button>
+                </form>
+                <ul>
+                </ul>
+            </div>
         );
   }
 }
