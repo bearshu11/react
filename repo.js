@@ -71,8 +71,8 @@ var RemoveJsonAction = {
 };
 
 var _responce = {data:null};
-var _stored = {data:[]}
-var _watching = {data:null}
+var _stored = {data:[]};
+var _watching = {data:null};
 
 var GetJsonStore = {
     getAll: function () {
