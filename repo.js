@@ -1,38 +1,16 @@
 var dispatcher = new Flux.Dispatcher();
 
-var GetJsonAction = {
-    sendGetRequest: function(url, query, viewCallBack, actionCallback) {
-        var request = new XMLHttpRequest();
-        request.open('GET', url, true);
-            request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-            request.onreadystatechange = function(){
-                if (request.readyState === 4 && request.status === 200){
-                    var returnedJson = JSON.parse(request.responseText);
-                    actionCallback(returnedJson);
-                }
-                else if (request.readyState === 4 && request.status !== 200){
-                    alert('error');
-                }
-            };
-            request.send();
-    },
+// Store
+var _responce = {data:null};
+var _stored = {data:[]};
+var _watching = {data:null};
 
-    getJson: function (url, query, viewCallback) {
-        this.sendGetRequest(url, query, viewCallback, function(returnedJson){
-            var json = returnedJson;
-            dispatcher.dispatch({
-                actionType: "getJson",
-                data: json
-            });
-            viewCallback();
-        });
-    }
-};
+// Watching
 var GetWatchingAction = {
     getWatching: function() {
         var request = new XMLHttpRequest();
         var url = "https://api.github.com/user/subscriptions";
-        var token = '';
+        var token = 'token ';
         request.open('GET', url, true);
             request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
             request.setRequestHeader('Authorization',token);
@@ -51,39 +29,6 @@ var GetWatchingAction = {
             request.send();
     },
 }
-
-var RegisterJsonAction = {
-    registerJson: function(json) {
-        dispatcher.dispatch({
-            actionType: "registerJson",
-            data: json
-        });
-    }
-};
-
-var RemoveJsonAction = {
-    romoveJson: function(json) {
-        dispatcher.dispatch({
-            actionType: "removeJson",
-            data: json
-        });
-    }
-};
-
-var _responce = {data:null};
-var _stored = {data:[]};
-var _watching = {data:null};
-
-var GetJsonStore = {
-    getAll: function () {
-        return _responce;
-    },
-    dispatcherIndex: dispatcher.register(function (payload) {
-        if (payload.actionType === "getJson") {
-            _responce.data = payload.data;
-        }
-    })
-};
 
 var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
     getAll: function () {
@@ -120,24 +65,7 @@ var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
     })
 });
 
-class ResultList extends React.Component {
-    constructor() {
-        super();
-        this.watch = this.watch.bind(this);
-    }
-    watch(value) {
-        console.log(value.name);
-        RegisterJsonAction.registerJson(value);
-    }
-    render() {
-        return (
-            <tr key = {this.props.value.id}>
-                <td>{this.props.value.name}</td> <td><button onClick={() => this.watch(this.props.value)}>watch</button></td>
-            </tr>
-        );
-    }
-}
-
+// Component
 class WatchingList extends React.Component {
     constructor() {
         super();
@@ -191,6 +119,84 @@ class WatchingRepositoryArea extends React.Component {
     }
 }
 
+var GetJsonAction = {
+    sendGetRequest: function(url, query, viewCallBack, actionCallback) {
+        var request = new XMLHttpRequest();
+        request.open('GET', url, true);
+            request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+            request.onreadystatechange = function(){
+                if (request.readyState === 4 && request.status === 200){
+                    var returnedJson = JSON.parse(request.responseText);
+                    actionCallback(returnedJson);
+                }
+                else if (request.readyState === 4 && request.status !== 200){
+                    alert('error');
+                }
+            };
+            request.send();
+    },
+
+    getJson: function (url, query, viewCallback) {
+        this.sendGetRequest(url, query, viewCallback, function(returnedJson){
+            var json = returnedJson;
+            dispatcher.dispatch({
+                actionType: "getJson",
+                data: json
+            });
+            viewCallback();
+        });
+    }
+};
+
+
+var RegisterJsonAction = {
+    registerJson: function(json) {
+        dispatcher.dispatch({
+            actionType: "registerJson",
+            data: json
+        });
+    }
+};
+
+var RemoveJsonAction = {
+    romoveJson: function(json) {
+        dispatcher.dispatch({
+            actionType: "removeJson",
+            data: json
+        });
+    }
+};
+
+
+
+var GetJsonStore = {
+    getAll: function () {
+        return _responce;
+    },
+    dispatcherIndex: dispatcher.register(function (payload) {
+        if (payload.actionType === "getJson") {
+            _responce.data = payload.data;
+        }
+    })
+};
+
+class ResultList extends React.Component {
+    constructor() {
+        super();
+        this.watch = this.watch.bind(this);
+    }
+    watch(value) {
+        console.log(value.name);
+        RegisterJsonAction.registerJson(value);
+    }
+    render() {
+        return (
+            <tr key = {this.props.value.id}>
+                <td>{this.props.value.name}</td> <td><button onClick={() => this.watch(this.props.value)}>watch</button></td>
+            </tr>
+        );
+    }
+}
 class SearchRepositoryForm extends React.Component {
     constructor() {
         super();
