@@ -1,5 +1,5 @@
 var dispatcher = new Flux.Dispatcher();
-var token = 'token '; // Personal access token
+var token = 'token f1808b332491275546b95996a4563c588659a381'; // Personal access token
 var _search = {data:null}; // 検索結果を入れるオブジェクト
 var _watching = {data:null}; // 現在watchしているものを入れるオブジェクト
 
