@@ -49,14 +49,10 @@ var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
     getWatching: function () {
         return _watching;
     },
-    // イベントを発生させるメソッドの定義
     emitGetWatching: function () {
         this.emit("getWatching");
     },
-    // イベントの監視（購読）とコールバックの定義
     addChangeListener: function (callback) {
-        // "change"イベントの発生を取得したら、引数にセットされたコールバック関数を実行
-        // this.on("change", callback);
         this.on("getWatching", callback);
     },
     dispatcherIndex: dispatcher.register(function (payload) {
