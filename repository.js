@@ -1,10 +1,13 @@
 var dispatcher = new Flux.Dispatcher();
-var token = 'token 6353dfa5a5111622e6837d72041ca02ef68ad86a';
+var token = 'token '; // Personal access token
+var _search = {data:null}; // 検索結果を入れるオブジェクト
+var _watching = {data:null}; // 現在watchしているものを入れるオブジェクト
 
-var _search = {data:null};
-var _watching = {data:null};
-
+//
 // searching & registering watch
+//
+
+// 入力した文字でrepositoryを検索するAction
 var searchAction = {
     sendGetRequest: function(url, query, viewCallBack, actionCallback) {
         var request = new XMLHttpRequest();
@@ -21,7 +24,6 @@ var searchAction = {
             };
             request.send();
     },
-
     search: function (url, query, viewCallback) {
         this.sendGetRequest(url, query, viewCallback, function(returnedJson){
             var json = returnedJson;
@@ -34,11 +36,11 @@ var searchAction = {
     }
 };
 
+// 選択したrepositoryをwatchに登録するAction
 var watchAction = {
     watch: function(selectedJson) {
         var request = new XMLHttpRequest();
         var fullName = selectedJson.full_name;
-        console.log(fullName);
         var url = "https://api.github.com/repos/" + fullName + "/" + "subscription";
         var params = {
             subscribed: true,
@@ -61,6 +63,7 @@ var watchAction = {
     }
 }
 
+// searchAction と watchAction からのデータを受け取るStore
 var searchStore = {
     getAll: function () {
         return _search;
@@ -74,13 +77,13 @@ var searchStore = {
     })
 };
 
+// 検索結果を表示するためのComponent
 class ResultList extends React.Component {
     constructor() {
         super();
         this.watch = this.watch.bind(this);
     }
     watch(value) {
-        console.log(value.name);
         watchAction.watch(value);
     }
     render() {
@@ -105,7 +108,6 @@ class SearchRepositoryForm extends React.Component {
             this.setState({
                 returnedData: responce.data
             });
-            console.log(responce.data);
         });
     }
     handleChangeInput(event) {
@@ -131,7 +133,7 @@ class SearchRepositoryForm extends React.Component {
         }
         return (
             <div>
-                <input type="text" value={this.state.query} onChange={this.handleChangeInput}/>
+                search:<input type="text" value={this.state.query} onChange={this.handleChangeInput}/>
                 <table>
                     <tbody>
                         {rows}
@@ -141,15 +143,20 @@ class SearchRepositoryForm extends React.Component {
         );
   }
 }
-
+// 検索結果を表示するためのComponentのレンダリング
 ReactDOM.render(
     <SearchRepositoryForm />,
     document.getElementById('searcher')
 );
-
+//
 // /searching & register watch
+//
 
+//
 // display watching & register unwatch
+//
+
+// 現在watch状態であるrepositoryを取得するAction
 var GetWatchingAction = {
     getWatching: function() {
         var request = new XMLHttpRequest();
@@ -174,11 +181,11 @@ var GetWatchingAction = {
     },
 }
 
+// 選択したrepositoryをunwatchにするAction
 var unwatchAction = {
     unwatch: function(selectedJson) {
         var request = new XMLHttpRequest();
         var fullName = selectedJson.full_name;
-        console.log(fullName);
         var url = "https://api.github.com/repos/" + fullName + "/" + "subscription";
         request.open('DELETE', url, true);
             request.setRequestHeader('Authorization',token);
@@ -193,6 +200,7 @@ var unwatchAction = {
     }
 }
 
+// GetWatchingActionとunwatchActionからデータを受け取るStore
 var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
     getAllWatching: function () {
         return _watching;
@@ -206,7 +214,6 @@ var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
     dispatcherIndex: dispatcher.register(function (payload) {
         if (payload.actionType === "getWatching") {
             _watching.data = payload.data;
-            console.log(_watching);
             StoredJsonStore.emitGetAllWatching();
         } else if (payload.actionType === "unwatch") {
             GetWatchingAction.getWatching();
@@ -214,13 +221,13 @@ var StoredJsonStore = Object.assign({}, EventEmitter.prototype, {
     })
 });
 
+// 現在watch状態であるrepositoryを表示するComponent
 class WatchingList extends React.Component {
     constructor() {
         super();
         this.unwatch = this.unwatch.bind(this);
     }
     unwatch(value) {
-        console.log(value);
         unwatchAction.unwatch(value);
     }
     render() {
@@ -231,7 +238,6 @@ class WatchingList extends React.Component {
         );
     }
 }
-
 class WatchingRepositoryArea extends React.Component {
     constructor() {
         super();
@@ -243,7 +249,6 @@ class WatchingRepositoryArea extends React.Component {
         StoredJsonStore.addChangeListener(function () {
             var storedData = StoredJsonStore.getAllWatching();
             self.setState({storedData:storedData.data});
-            console.log("HELLOHELLO");
         });
     }
     render() {
@@ -251,7 +256,6 @@ class WatchingRepositoryArea extends React.Component {
         if (this.state.storedData.length !== 0) {
             var storedData = this.state.storedData;
             for (var i=0;i<storedData.length;i++) {
-                console.log(storedData[i]);
                 rows.push(<WatchingList value={storedData[i]} key={storedData[i].id}></WatchingList>);
             }
         }
@@ -265,6 +269,7 @@ class WatchingRepositoryArea extends React.Component {
     }
 }
 
+// 現在watch状態であるrepositoryを表示するComponentのレンダリング
 ReactDOM.render(
     <WatchingRepositoryArea />,
     document.getElementById('watching')
