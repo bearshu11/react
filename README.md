@@ -1,4 +1,5 @@
-# React (Problem of Wantedly )
+# React
+githubAPIを用いて、githubのwatch/unwatchを取得し、変更できる。
 
 ## Personal access token の設定場所
 repository.js の２行目
